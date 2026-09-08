@@ -1,0 +1,33 @@
+<header class="site-header" data-testid="site-header">
+  <div class="container header-inner">
+    <a class="brand" routerLink="/" data-testid="brand-link">Conduit</a>
+
+    <nav class="desktop-nav" aria-label="Primary">
+      @for (item of navItems(); track item.link) {
+        <a
+          class="nav-link"
+          [routerLink]="item.link"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          [attr.data-testid]="'nav-' + item.label.toLowerCase().replace(' ', '-')"
+          >{{ item.label }}</a
+        >
+      }
+    </nav>
+  </div>
+</header>
+
+<nav class="tabbar" aria-label="Primary mobile navigation" data-testid="mobile-tabbar">
+  @for (item of navItems(); track item.link) {
+    <a
+      class="tab"
+      [routerLink]="item.link"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: item.exact }"
+      [attr.data-testid]="'tab-' + item.label.toLowerCase().replace(' ', '-')"
+    >
+      <span class="tab-icon" aria-hidden="true">{{ item.icon }}</span>
+      <span class="tab-label">{{ item.label }}</span>
+    </a>
+  }
+</nav>

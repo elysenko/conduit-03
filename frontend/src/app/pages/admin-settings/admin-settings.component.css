@@ -1,0 +1,35 @@
+.admin-head { margin-bottom: var(--space-5); }
+.admin-title { font-size: var(--text-lg); }
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
+  gap: var(--space-5);
+  max-width: 920px;
+}
+.service-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.service-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.service-name { font-size: var(--text-base); margin: 0; }
+.badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge.is-ok { background: var(--color-success-soft); color: var(--color-brand-dark); }
+.badge.is-warn { background: var(--color-warning-soft); color: var(--color-warning); }
+.service-desc { color: var(--color-text-subtle); font-size: var(--text-sm); margin: 0 0 var(--space-4); }
+code { font-family: var(--font-mono); font-size: var(--text-xs); }

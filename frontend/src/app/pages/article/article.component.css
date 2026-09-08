@@ -1,0 +1,56 @@
+.article-banner {
+  background: var(--color-text);
+  color: var(--color-brand-contrast);
+  padding: var(--space-6) 0;
+}
+.article-title { font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-4); }
+.article-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.author-link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; }
+.author-info { display: flex; flex-direction: column; line-height: 1.2; }
+.author-name { color: var(--color-brand-contrast); font-weight: 600; font-size: var(--text-sm); }
+.article-actions .date { color: var(--color-text-faint); }
+.article-actions .btn-secondary { border-color: var(--color-text-subtle); color: var(--color-text-faint); }
+.article-actions .btn-secondary:hover { background: var(--color-text-muted); color: var(--color-brand-contrast); }
+.article-actions .btn-outline { border-color: var(--color-brand); color: var(--color-brand); }
+.article-actions .btn-outline.is-on { background: var(--color-brand); color: var(--color-brand-contrast); }
+
+.article-body {
+  max-width: 680px;
+  margin: 0 auto;
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  line-height: 1.8;
+}
+.article-body p { margin: 0 0 var(--space-4); }
+.article-tags { max-width: 680px; margin: var(--space-5) auto; }
+.rule {
+  max-width: 680px;
+  border: none;
+  border-top: 1px solid var(--color-border-soft);
+  margin: var(--space-6) auto;
+}
+
+.comments { max-width: 680px; margin: 0 auto; }
+.comments-title { font-size: var(--text-base); margin-bottom: var(--space-4); }
+.comment-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  overflow: hidden;
+}
+.comment-form .form-control { border: none; border-radius: 0; }
+.comment-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-alt);
+  border-top: 1px solid var(--color-border-soft);
+}
+.signin-note { text-align: center; color: var(--color-text-subtle); margin-bottom: var(--space-5); }
+.center { text-align: center; }
+
+@media (max-width: 768px) {
+  .article-title { font-size: var(--text-lg); }
+  .article-actions .btn { flex: 1 1 auto; }
+  .comment-form-actions .btn { width: 100%; }
+}

@@ -1,0 +1,59 @@
+<section class="banner" data-testid="home-banner">
+  <div class="container">
+    <h1>Conduit</h1>
+    <p>A place to share your knowledge.</p>
+  </div>
+</section>
+
+<div class="container page-pad">
+  <div class="row">
+    <div class="col-main">
+      <nav class="feed-toggle" aria-label="Article feeds" data-testid="feed-toggle">
+        @if (isAuthenticated()) {
+          <button
+            type="button"
+            class="feed-tab"
+            [class.is-active]="tab() === 'feed'"
+            (click)="selectTab('feed')"
+            data-testid="tab-your-feed"
+          >
+            Your Feed
+          </button>
+        }
+        <button
+          type="button"
+          class="feed-tab"
+          [class.is-active]="tab() === 'global'"
+          (click)="selectTab('global')"
+          data-testid="tab-global-feed"
+        >
+          Global Feed
+        </button>
+        @if (activeTag()) {
+          <span class="feed-tab is-active" data-testid="tab-active-tag">#{{ activeTag() }}</span>
+        }
+      </nav>
+
+      <app-article-list
+        [articles]="visible()"
+        [articlesCount]="visibleCount()"
+        [loading]="loading()"
+        [error]="error()"
+        [emptyMessage]="emptyMessage()"
+        [page]="page()"
+        [pageSize]="pageSize"
+        (toggleFavorite)="toggleFavorite($event)"
+        (pageChange)="changePage($event)"
+      />
+    </div>
+
+    <aside class="col-side">
+      <app-tag-list
+        [tags]="tags()"
+        [loading]="tagsLoading()"
+        [activeTag]="activeTag()"
+        (select)="selectTag($event)"
+      />
+    </aside>
+  </div>
+</div>

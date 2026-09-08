@@ -1,0 +1,43 @@
+<article class="preview" [attr.data-testid]="'article-preview-' + article.slug">
+  <div class="preview-meta">
+    <a class="author-link" [routerLink]="['/profile', article.author.username]">
+      <img
+        class="avatar"
+        [src]="article.author.image"
+        [alt]="article.author.username"
+        width="32"
+        height="32"
+      />
+      <span class="author-info">
+        <span class="author-name">{{ article.author.username }}</span>
+        <span class="date">{{ article.createdAt | date: 'longDate' }}</span>
+      </span>
+    </a>
+
+    <button
+      type="button"
+      class="btn btn-sm fav-btn"
+      [class.is-on]="article.favorited"
+      (click)="toggleFavorite.emit(article)"
+      [attr.aria-pressed]="article.favorited"
+      [attr.aria-label]="'Favorite ' + article.title"
+      [attr.data-testid]="'favorite-' + article.slug"
+    >
+      <span aria-hidden="true">♥</span> {{ article.favoritesCount }}
+    </button>
+  </div>
+
+  <a class="preview-body" [routerLink]="['/article', article.slug]">
+    <h2 class="preview-title">{{ article.title }}</h2>
+    <p class="preview-description">{{ article.description }}</p>
+    <span class="read-more">Read more…</span>
+  </a>
+
+  @if (article.tagList.length) {
+    <ul class="tag-row preview-tags">
+      @for (tag of article.tagList; track tag) {
+        <li><span class="tag-outline">{{ tag }}</span></li>
+      }
+    </ul>
+  }
+</article>

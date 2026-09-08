@@ -1,0 +1,122 @@
+@if (loading()) {
+  <p class="state-note" data-testid="article-loading">Loading article…</p>
+} @else if (error()) {
+  <p class="state-note is-error" data-testid="article-error">{{ error() }}</p>
+} @else if (!article()) {
+  <div class="container page-pad">
+    <p class="state-note" data-testid="article-missing">That article could not be found.</p>
+    <p class="center"><a class="btn btn-outline" routerLink="/">Back to Global Feed</a></p>
+  </div>
+} @else {
+  <section class="article-banner" data-testid="article-banner">
+    <div class="container">
+      <h1 class="article-title">{{ article()!.title }}</h1>
+      <div class="article-actions">
+        <a class="author-link" [routerLink]="['/profile', article()!.author.username]">
+          <img class="avatar" [src]="article()!.author.image" [alt]="article()!.author.username" width="36" height="36" />
+          <span class="author-info">
+            <span class="author-name">{{ article()!.author.username }}</span>
+            <span class="date">{{ article()!.createdAt | date: 'longDate' }}</span>
+          </span>
+        </a>
+
+        @if (isAuthor()) {
+          <a class="btn btn-sm btn-secondary" [routerLink]="['/editor', article()!.slug]" data-testid="edit-article">
+            Edit Article
+          </a>
+          <button type="button" class="btn btn-sm btn-danger" (click)="openDeleteArticle()" data-testid="delete-article">
+            Delete Article
+          </button>
+        } @else {
+          <button type="button" class="btn btn-sm btn-secondary" (click)="toggleFollow()" data-testid="follow-author">
+            {{ article()!.author.following ? 'Unfollow' : 'Follow' }} {{ article()!.author.username }}
+          </button>
+        }
+
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          [class.is-on]="article()!.favorited"
+          (click)="toggleFavorite()"
+          data-testid="favorite-article"
+        >
+          <span aria-hidden="true">♥</span>
+          {{ article()!.favorited ? 'Unfavorite' : 'Favorite' }} ({{ article()!.favoritesCount }})
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="container page-pad">
+    <div class="article-body" data-testid="article-body">
+      @for (para of bodyParagraphs(); track $index) {
+        <p>{{ para }}</p>
+      }
+    </div>
+
+    @if (article()!.tagList.length) {
+      <ul class="tag-row article-tags">
+        @for (tag of article()!.tagList; track tag) {
+          <li><span class="tag-outline">{{ tag }}</span></li>
+        }
+      </ul>
+    }
+
+    <hr class="rule" />
+
+    <section class="comments" data-testid="comments-section">
+      <h2 class="comments-title">Comments ({{ comments().length }})</h2>
+
+      @if (isAuthenticated()) {
+        <form class="comment-form" [formGroup]="commentForm" (ngSubmit)="addComment()" data-testid="comment-form">
+          <textarea
+            class="form-control"
+            rows="3"
+            formControlName="body"
+            placeholder="Write a comment…"
+            data-testid="comment-input"
+          ></textarea>
+          <div class="comment-form-actions">
+            <button type="submit" class="btn btn-primary" data-testid="comment-submit">Post Comment</button>
+          </div>
+        </form>
+      } @else {
+        <p class="signin-note" data-testid="comment-signin">
+          <a routerLink="/login">Sign in</a> or <a routerLink="/register">sign up</a> to add comments on this article.
+        </p>
+      }
+
+      @if (!comments().length) {
+        <p class="state-note" data-testid="comments-empty">No comments yet. Start the conversation.</p>
+      } @else {
+        @for (comment of comments(); track comment.id) {
+          <app-comment-card
+            [comment]="comment"
+            [canDelete]="canDeleteComment(comment)"
+            (remove)="openDeleteComment($event)"
+          />
+        }
+      }
+    </section>
+  </div>
+
+  @if (modal() === 'delete-article') {
+    <app-confirm-modal
+      title="Delete this article?"
+      message="“{{ article()!.title }}” and all of its comments will be permanently removed."
+      confirmLabel="Delete article"
+      (confirm)="confirmDeleteArticle()"
+      (cancel)="closeModal()"
+    />
+  }
+
+  @if (modal() === 'delete-comment') {
+    <app-confirm-modal
+      title="Delete this comment?"
+      message="This comment will be permanently removed from the article."
+      confirmLabel="Delete comment"
+      (confirm)="confirmDeleteComment()"
+      (cancel)="closeModal()"
+    />
+  }
+}

@@ -1,0 +1,68 @@
+<div class="container page-pad">
+  <header class="admin-head">
+    <h1 class="admin-title" data-testid="admin-settings-title">Admin · Service settings</h1>
+    <p class="muted">
+      Signed in as <strong>{{ adminName()?.username }}</strong> ({{ adminName()?.role }}). Credentials are
+      stored server-side and never echoed back in full.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p class="state-note" data-testid="admin-loading">Loading service settings…</p>
+  } @else if (error()) {
+    <p class="error-list" data-testid="admin-error">{{ error() }}</p>
+  }
+
+  @if (!services().length) {
+    <p class="state-note" data-testid="admin-empty">No provisioned services require configuration.</p>
+  } @else {
+    <div class="service-grid">
+      @for (service of services(); track service.service) {
+        <section class="service-card" [attr.data-testid]="'service-' + service.service">
+          <header class="service-head">
+            <h2 class="service-name">{{ service.label }}</h2>
+            <span class="badge" [class.is-ok]="service.configured" [class.is-warn]="!service.configured">
+              {{ service.configured ? 'Configured' : 'Not configured' }}
+            </span>
+          </header>
+          <p class="service-desc">{{ service.description }}</p>
+
+          @for (field of service.fields; track field.key) {
+            <div class="form-field">
+              <label class="form-label" [attr.for]="service.service + '-' + field.key">
+                {{ field.label }}
+              </label>
+              <input
+                [id]="service.service + '-' + field.key"
+                class="form-control"
+                [type]="field.secret ? 'password' : 'text'"
+                [ngModel]="field.value"
+                (ngModelChange)="updateField(service.service, field.key, $event)"
+                [name]="service.service + '-' + field.key"
+                [placeholder]="field.placeholder"
+                [attr.data-testid]="'field-' + field.key"
+              />
+              <span class="form-hint">Env key <code>{{ field.key }}</code></span>
+            </div>
+          }
+
+          @if (savedService() === service.service) {
+            <p class="success-note" [attr.data-testid]="'saved-' + service.service">
+              {{ service.label }} credentials saved.
+            </p>
+          }
+
+          <button
+            type="button"
+            class="btn btn-lg btn-primary btn-block"
+            [disabled]="savingService() === service.service"
+            (click)="save(service)"
+            [attr.data-testid]="'save-' + service.service"
+          >
+            {{ savingService() === service.service ? 'Saving…' : 'Save ' + service.label }}
+          </button>
+        </section>
+      }
+    </div>
+  }
+</div>

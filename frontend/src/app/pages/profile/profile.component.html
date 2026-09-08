@@ -1,0 +1,59 @@
+@if (loading()) {
+  <p class="state-note" data-testid="profile-loading">Loading profile…</p>
+} @else if (error()) {
+  <p class="state-note is-error" data-testid="profile-error">{{ error() }}</p>
+} @else if (!profile()) {
+  <p class="state-note" data-testid="profile-missing">That profile could not be found.</p>
+} @else {
+  <section class="profile-banner" data-testid="profile-banner">
+    <div class="container profile-inner">
+      <img
+        class="avatar profile-avatar"
+        [src]="profile()!.image"
+        [alt]="profile()!.username"
+        width="100"
+        height="100"
+      />
+      <h1 class="profile-name">{{ profile()!.username }}</h1>
+      <p class="profile-bio">{{ profile()!.bio || 'This author has not written a bio yet.' }}</p>
+
+      @if (isSelf()) {
+        <a class="btn btn-secondary" routerLink="/settings" data-testid="edit-profile-settings">
+          <span aria-hidden="true">⚙</span> Edit profile settings
+        </a>
+      } @else {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="toggleFollow()"
+          data-testid="follow-profile"
+        >
+          <span aria-hidden="true">{{ profile()!.following ? '−' : '＋' }}</span>
+          {{ profile()!.following ? 'Unfollow' : 'Follow' }} {{ profile()!.username }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <div class="container page-pad">
+    <nav class="profile-tabs" aria-label="Profile article tabs" data-testid="profile-tabs">
+      <a
+        class="profile-tab"
+        routerLink="."
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        data-testid="tab-my-articles"
+        >My Articles</a
+      >
+      <a
+        class="profile-tab"
+        routerLink="favorites"
+        routerLinkActive="is-active"
+        data-testid="tab-favorited-articles"
+        >Favorited Articles</a
+      >
+    </nav>
+
+    <router-outlet />
+  </div>
+}

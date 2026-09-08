@@ -2,12 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>App</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script>
+      /*
+       * Resolve <base href> when the build did not pin one. Previews are served from
+       * https://<host>/<mockup_id>/ while production serves from /, so detect a
+       * UUID-shaped first path segment and scope the base to it. An explicit
+       * --base-href emitted by the build always wins (first <base> in the document).
+       */
+      (function () {
+        if (document.querySelector('base')) return;
+        var seg = location.pathname.split('/')[1] || '';
+        var isMockupId = /^[0-9a-f]{8}-[0-9a-f-]{4,}$/i.test(seg);
+        document.write('<base href="/' + (isMockupId ? seg + '/' : '') + '">');
+      })();
+    </script>
+    <title>Conduit</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Conduit — a place to share your knowledge. Read, write, favorite and follow."
+    />
+    <meta name="theme-color" content="#5cb85c" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235cb85c'/%3E%3Ctext x='16' y='23' font-family='sans-serif' font-size='20' font-weight='700' fill='%23fff' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&family=Merriweather:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <app-root></app-root>
+    <app-root>Conduit</app-root>
   </body>
 </html>

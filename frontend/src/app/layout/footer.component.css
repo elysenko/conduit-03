@@ -1,0 +1,17 @@
+.site-footer {
+  background: var(--color-surface-sunken);
+  padding: var(--space-4) 0;
+  margin-top: var(--space-7);
+}
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-brand);
+}
+.attribution { color: var(--color-text-subtle); font-size: var(--text-xs); }

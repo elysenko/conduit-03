@@ -1,0 +1,32 @@
+<div data-testid="article-list">
+  @if (loading) {
+    <p class="state-note" data-testid="articles-loading">Loading articles…</p>
+  } @else if (error) {
+    <p class="state-note is-error" data-testid="articles-error">{{ error }}</p>
+  } @else if (!articles.length) {
+    <p class="state-note" data-testid="articles-empty">{{ emptyMessage }}</p>
+  } @else {
+    @for (article of articles; track article.slug) {
+      <app-article-preview
+        [article]="article"
+        (toggleFavorite)="toggleFavorite.emit($event)"
+      />
+    }
+
+    @if (pages.length > 1) {
+      <nav class="pagination" aria-label="Pagination" data-testid="pagination">
+        @for (p of pages; track p) {
+          <button
+            type="button"
+            class="page-btn"
+            [class.is-active]="p === page"
+            (click)="pageChange.emit(p)"
+            [attr.aria-current]="p === page ? 'page' : null"
+          >
+            {{ p }}
+          </button>
+        }
+      </nav>
+    }
+  }
+</div>

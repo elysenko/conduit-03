@@ -1,0 +1,79 @@
+<div class="container page-pad">
+  <div class="auth-card">
+    <h1 class="auth-title">Sign up</h1>
+    <p class="auth-switch"><a routerLink="/login">Have an account?</a></p>
+
+    @if (errors().length) {
+      <ul class="error-list" data-testid="register-errors">
+        @for (message of errors(); track message) {
+          <li>{{ message }}</li>
+        }
+      </ul>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" data-testid="register-form" novalidate>
+      <div class="form-field">
+        <label class="form-label" for="reg-username">Username</label>
+        <input
+          id="reg-username"
+          class="form-control"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="Your public handle"
+          data-testid="register-username"
+        />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <span class="field-error">Username is required.</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="reg-email">Email</label>
+        <input
+          id="reg-email"
+          class="form-control"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          data-testid="register-email"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <span class="field-error">Enter a valid email address.</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="reg-password">Password</label>
+        <input
+          id="reg-password"
+          class="form-control"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          placeholder="At least 8 characters"
+          data-testid="register-password"
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <span class="field-error">Password must be at least 8 characters.</span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-lg btn-primary btn-block"
+        [disabled]="submitting()"
+        data-testid="register-submit"
+      >
+        {{ submitting() ? 'Creating account…' : 'Sign up' }}
+      </button>
+
+      @if (previewShortcut) {
+        <button type="button" class="btn-link demo-link" (click)="useDemoMode()" data-testid="register-demo">
+          {{ previewShortcut }}
+        </button>
+      }
+    </form>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<div class="container page-pad">
+  <div class="settings-card">
+    <h1 class="settings-title">Your Settings</h1>
+
+    @if (loading()) {
+      <p class="state-note" data-testid="settings-loading">Loading your settings…</p>
+    } @else {
+      @if (errors().length) {
+        <ul class="error-list" data-testid="settings-errors">
+          @for (message of errors(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      }
+      @if (saved()) {
+        <p class="success-note" data-testid="settings-saved">Your settings have been updated.</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" data-testid="settings-form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="set-image">Profile picture URL</label>
+          <input id="set-image" class="form-control" type="url" formControlName="image"
+                 placeholder="https://…" data-testid="settings-image" />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="set-username">Username</label>
+          <input id="set-username" class="form-control" type="text" formControlName="username"
+                 autocomplete="username" data-testid="settings-username" />
+          @if (form.controls.username.touched && form.controls.username.invalid) {
+            <span class="field-error">Username is required.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="set-bio">Short bio</label>
+          <textarea id="set-bio" class="form-control" rows="6" formControlName="bio"
+                    placeholder="Tell readers about yourself" data-testid="settings-bio"></textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="set-email">Email</label>
+          <input id="set-email" class="form-control" type="email" formControlName="email"
+                 autocomplete="email" data-testid="settings-email" />
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <span class="field-error">Enter a valid email address.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="set-password">New password</label>
+          <input id="set-password" class="form-control" type="password" formControlName="password"
+                 autocomplete="new-password" placeholder="Leave blank to keep your current password"
+                 data-testid="settings-password" />
+          <span class="form-hint">Minimum 8 characters.</span>
+        </div>
+
+        <div class="settings-actions">
+          <button type="submit" class="btn btn-lg btn-primary" [disabled]="saving()" data-testid="settings-submit">
+            {{ saving() ? 'Saving…' : 'Update Settings' }}
+          </button>
+        </div>
+      </form>
+
+      <hr class="rule" />
+
+      <button type="button" class="btn btn-lg btn-danger btn-block" (click)="logout()" data-testid="settings-logout">
+        Or click here to logout.
+      </button>
+    }
+  </div>
+</div>

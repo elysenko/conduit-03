@@ -1,0 +1,20 @@
+<div class="backdrop" (click)="cancel.emit()" data-testid="modal-backdrop"></div>
+<div
+  class="sheet"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="title"
+  data-testid="confirm-modal"
+>
+  <div class="grabber" aria-hidden="true"></div>
+  <h2 class="sheet-title">{{ title }}</h2>
+  <p class="sheet-message">{{ message }}</p>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-lg btn-danger-solid" (click)="confirm.emit()" data-testid="modal-confirm">
+      {{ confirmLabel }}
+    </button>
+    <button type="button" class="btn btn-lg btn-secondary" (click)="cancel.emit()" data-testid="modal-cancel">
+      {{ cancelLabel }}
+    </button>
+  </div>
+</div>

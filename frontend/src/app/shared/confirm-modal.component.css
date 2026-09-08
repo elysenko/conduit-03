@@ -1,0 +1,44 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  z-index: 40;
+}
+.sheet {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100% - 2rem));
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5);
+}
+.grabber { display: none; }
+.sheet-title { font-size: var(--text-md); }
+.sheet-message { margin: 0 0 var(--space-5); color: var(--color-text-muted); }
+.sheet-actions { display: flex; gap: var(--space-3); justify-content: flex-end; }
+
+@media (max-width: 768px) {
+  .sheet {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom, 0px));
+  }
+  .grabber {
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: 0 auto var(--space-4);
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+  }
+  .sheet-actions { flex-direction: column-reverse; }
+  .sheet-actions .btn { width: 100%; }
+}

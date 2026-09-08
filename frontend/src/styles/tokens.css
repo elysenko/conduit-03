@@ -1,0 +1,72 @@
+/**
+ * Conduit design tokens.
+ * Single source of truth for colour, type, spacing and elevation.
+ * Component CSS must reference these via var(--token) — never raw hex.
+ */
+:root {
+  /* Brand */
+  --color-brand: #5cb85c;
+  --color-brand-strong: #449d44;
+  --color-brand-dark: #3d8b3d;
+  --color-brand-soft: #eaf6ea;
+  --color-brand-contrast: #ffffff;
+
+  /* Neutrals */
+  --color-text: #373a3c;
+  --color-text-muted: #55595c;
+  --color-text-subtle: #999999;
+  --color-text-faint: #bbbbbb;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7f8f7;
+  --color-surface-sunken: #f3f3f3;
+  --color-border: #dddddd;
+  --color-border-soft: #eeeeee;
+
+  /* Feedback */
+  --color-danger: #b85c5c;
+  --color-danger-soft: #f7ecec;
+  --color-warning: #d9822b;
+  --color-warning-soft: #fdf3e7;
+  --color-success: #5cb85c;
+  --color-success-soft: #eaf6ea;
+  --color-info: #4a8fd4;
+
+  /* Type */
+  --font-body: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Titillium Web', 'Source Sans 3', system-ui, sans-serif;
+  --font-serif: 'Merriweather', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.5rem;
+  --text-xl: 2rem;
+  --text-2xl: 2.75rem;
+  --text-3xl: 3.5rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Radius + elevation */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-pill: 999rem;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 -2px 12px rgba(0, 0, 0, 0.08);
+
+  /* Layout */
+  --container-max: 1140px;
+  --header-height: 56px;
+  --tabbar-height: 60px;
+  --focus-ring: 0 0 0 3px rgba(92, 184, 92, 0.35);
+}

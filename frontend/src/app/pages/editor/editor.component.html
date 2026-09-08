@@ -1,0 +1,113 @@
+<div class="container page-pad">
+  <div class="editor-card">
+    <h1 class="editor-title" data-testid="editor-title">
+      {{ isEdit() ? 'Edit Article' : 'New Article' }}
+    </h1>
+
+    @if (loading()) {
+      <p class="state-note" data-testid="editor-loading">Loading article…</p>
+    } @else {
+      @if (errors().length) {
+        <ul class="error-list" data-testid="editor-errors">
+          @for (message of errors(); track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" data-testid="editor-form" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="editor-title-input">Article title</label>
+          <input
+            id="editor-title-input"
+            class="form-control"
+            type="text"
+            formControlName="title"
+            placeholder="How to train your dragon"
+            data-testid="editor-title-input"
+          />
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <span class="field-error">A title of at least 3 characters is required.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="editor-description">What's this article about?</label>
+          <input
+            id="editor-description"
+            class="form-control"
+            type="text"
+            formControlName="description"
+            placeholder="Ever wonder how?"
+            data-testid="editor-description"
+          />
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <span class="field-error">A short description is required.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="editor-body">Write your article</label>
+          <textarea
+            id="editor-body"
+            class="form-control body-input"
+            rows="10"
+            formControlName="body"
+            placeholder="Write your article (in markdown)"
+            data-testid="editor-body"
+          ></textarea>
+          @if (form.controls.body.touched && form.controls.body.invalid) {
+            <span class="field-error">The article body is required.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="editor-tags">Tags</label>
+          <div class="tag-input-row">
+            <input
+              id="editor-tags"
+              class="form-control"
+              type="text"
+              [value]="tagDraft()"
+              (input)="updateTagDraft($any($event.target).value)"
+              (keydown.enter)="$event.preventDefault(); addTag()"
+              placeholder="Enter tags"
+              data-testid="editor-tag-input"
+            />
+            <button type="button" class="btn btn-secondary" (click)="addTag()" data-testid="editor-add-tag">
+              Add tag
+            </button>
+          </div>
+          @if (tags().length) {
+            <ul class="tag-row draft-tags">
+              @for (tag of tags(); track tag) {
+                <li>
+                  <button type="button" class="tag-pill tag-remove" (click)="removeTag(tag)">
+                    {{ tag }} <span aria-hidden="true">×</span>
+                    <span class="sr-only">Remove tag {{ tag }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="form-hint">No tags yet — tags power the Popular Tags sidebar.</span>
+          }
+        </div>
+
+        <div class="editor-actions">
+          <button type="button" class="btn btn-lg btn-secondary" (click)="cancel()" data-testid="editor-cancel">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-lg btn-primary"
+            [disabled]="submitting()"
+            data-testid="editor-submit"
+          >
+            {{ isEdit() ? 'Update Article' : 'Publish Article' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

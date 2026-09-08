@@ -1,0 +1,29 @@
+.comment {
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+}
+.comment-body { margin: 0; padding: var(--space-4); }
+.comment-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface-alt);
+  border-top: 1px solid var(--color-border-soft);
+  font-size: var(--text-xs);
+}
+.author-link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; }
+.author-name { color: var(--color-brand); font-weight: 600; }
+.delete-btn {
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+.delete-btn:hover { color: var(--color-danger); }

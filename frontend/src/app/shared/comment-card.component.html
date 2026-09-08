@@ -1,0 +1,27 @@
+<article class="comment" [attr.data-testid]="'comment-' + comment.id">
+  <p class="comment-body">{{ comment.body }}</p>
+  <footer class="comment-footer">
+    <a class="author-link" [routerLink]="['/profile', comment.author.username]">
+      <img
+        class="avatar"
+        [src]="comment.author.image"
+        [alt]="comment.author.username"
+        width="24"
+        height="24"
+      />
+      <span class="author-name">{{ comment.author.username }}</span>
+    </a>
+    <span class="date">{{ comment.createdAt | date: 'longDate' }}</span>
+    @if (canDelete) {
+      <button
+        type="button"
+        class="delete-btn"
+        (click)="remove.emit(comment)"
+        [attr.aria-label]="'Delete comment by ' + comment.author.username"
+        [attr.data-testid]="'delete-comment-' + comment.id"
+      >
+        <span aria-hidden="true">🗑</span>
+      </button>
+    }
+  </footer>
+</article>

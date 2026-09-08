@@ -1,0 +1,14 @@
+.editor-card { width: 100%; max-width: 720px; margin: 0 auto; }
+.editor-title { font-size: var(--text-lg); margin-bottom: var(--space-5); }
+.body-input { min-height: 240px; font-family: var(--font-mono); font-size: 16px; }
+.tag-input-row { display: flex; gap: var(--space-2); }
+.tag-input-row .form-control { flex: 1 1 auto; }
+.draft-tags { margin-top: var(--space-3); }
+.tag-remove { border: none; cursor: pointer; font: inherit; font-size: var(--text-xs); min-height: 32px; }
+.editor-actions { display: flex; justify-content: flex-end; gap: var(--space-3); }
+
+@media (max-width: 768px) {
+  .editor-actions { flex-direction: column-reverse; }
+  .editor-actions .btn { width: 100%; }
+  .tag-remove { min-height: 44px; }
+}

@@ -1,0 +1,8 @@
+<app-article-list
+  [articles]="visible()"
+  [articlesCount]="visible().length"
+  [loading]="loading()"
+  [error]="error()"
+  [emptyMessage]="emptyMessage()"
+  (toggleFavorite)="toggleFavorite($event)"
+/>

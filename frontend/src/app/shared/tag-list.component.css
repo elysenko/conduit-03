@@ -1,0 +1,14 @@
+h3 { font-size: var(--text-base); margin-bottom: var(--space-3); }
+.tag-btn {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-xs);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+}
+.tag-btn.is-active { background: var(--color-brand); }
+.tag-btn:active { transform: scale(0.97); }
+@media (max-width: 768px) {
+  .tag-btn { min-height: 44px; }
+}

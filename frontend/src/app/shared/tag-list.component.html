@@ -1,0 +1,24 @@
+<div class="sidebar-card" data-testid="popular-tags">
+  <h3>Popular Tags</h3>
+  @if (loading) {
+    <p class="muted text-sm" data-testid="tags-loading">Loading tags…</p>
+  } @else if (!tags.length) {
+    <p class="muted text-sm" data-testid="tags-empty">No tags yet.</p>
+  } @else {
+    <ul class="tag-row">
+      @for (tag of tags; track tag) {
+        <li>
+          <button
+            type="button"
+            class="tag-pill tag-btn"
+            [class.is-active]="tag === activeTag"
+            (click)="select.emit(tag)"
+            [attr.data-testid]="'tag-' + tag"
+          >
+            {{ tag }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
