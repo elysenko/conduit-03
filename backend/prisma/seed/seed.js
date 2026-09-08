@@ -6,7 +6,8 @@
  * pipeline's migrate Job executes `npx prisma migrate deploy && node prisma/seed/seed.js`.
  *
  * Input:  COLOSSUS_ACCOUNTS_JSON — injected into the pod env by Colossus at provision:
- *         [{"role":"ADMIN","email":"admin@demo.local","password":"…","login_path":"/login"}, …]
+ *         a JSON array with one object per contract role, each carrying the keys
+ *         role / email / password / login_path. Values are minted by Colossus.
  * Effect: upserts one `colossus_accounts` row AND one `User` per account, hashing the
  *         password with bcryptjs exactly as the auth service verifies it. Idempotent —
  *         re-running re-asserts the hash so the platform-held password always logs in.
@@ -65,7 +66,7 @@ function resolveAppRole(contractRole) {
 }
 
 /**
- * Derive a readable public handle from the account email, e.g. admin@demo.local -> "admin".
+ * Derive a readable public handle from the account email local-part (the text before "@").
  * `User.username` is unique and defaults to a cuid, so this is cosmetic only: on collision
  * we suffix the role, then a counter, and never steal a handle owned by another email.
  */

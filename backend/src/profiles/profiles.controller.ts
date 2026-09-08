@@ -1,4 +1,13 @@
-import { Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -20,8 +29,10 @@ export class ProfilesController {
     return this.profiles.get(username, user?.id);
   }
 
+  /** Following is idempotent, so it answers 200 rather than 201. */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Post(':username/follow')
   follow(
     @Param('username') username: string,

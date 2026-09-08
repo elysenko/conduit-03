@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -85,8 +87,10 @@ export class ArticlesController {
     return { slug };
   }
 
+  /** Favoriting is idempotent, so it answers 200 rather than 201. */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Post(':slug/favorite')
   favorite(
     @Param('slug') slug: string,

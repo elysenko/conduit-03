@@ -33,14 +33,17 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://conduit:conduit@db:5432/conduit
-      JWT_SECRET: local-development-secret-change-me
+      # Supplied by the platform in real environments; export one locally.
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in your shell before docker compose up}
       JWT_EXPIRES_IN: 7d
       PORT: '3001'
-      # Consumed by prisma/seed/seed.js — the platform injects this in real
-      # environments; locally it materializes one login per role.
-      COLOSSUS_ACCOUNTS_JSON: >-
-        [{"role":"ADMIN","email":"admin@demo.local","password":"Demo1234!","login_path":"/login"},
-         {"role":"USER","email":"user@demo.local","password":"Demo1234!","login_path":"/login"}]
+      # Consumed by prisma/seed/seed.js. Colossus injects this at provision in
+      # every real environment. For a local run, supply it yourself from your
+      # shell (it is never committed) — one JSON object per role in the stack
+      # contract, each with role/email/password/login_path:
+      #   export COLOSSUS_ACCOUNTS_JSON='[{"role":"ADMIN", ...}]'
+      # The seed exits 1 when it is absent rather than inventing a login.
+      COLOSSUS_ACCOUNTS_JSON: ${COLOSSUS_ACCOUNTS_JSON:?set COLOSSUS_ACCOUNTS_JSON in your shell before docker compose up}
     command: >-
       sh -c "npx prisma migrate deploy && node prisma/seed/seed.js && node dist/main.js"
     ports:

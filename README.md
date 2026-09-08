@@ -13,14 +13,24 @@ sidebar.
 
 ## Quick start (Docker)
 
+Compose reads two secrets from your shell — neither is committed, and both are
+injected automatically by the platform in real environments:
+
 ```bash
+export JWT_SECRET="$(openssl rand -hex 32)"
+# One object per role in the stack contract (ADMIN, MANAGER, USER). Choose your
+# own addresses and passwords; the seed hashes them with bcryptjs.
+export COLOSSUS_ACCOUNTS_JSON='[{"role":"ADMIN","email":"<you>","password":"<pick-one>","login_path":"/login"}]'
+
 docker compose up --build
 open http://localhost:4200        # SPA (nginx proxies /api to the backend)
 open http://localhost:3001/api/docs   # Swagger
 ```
 
 Compose starts Postgres, runs `prisma migrate deploy` + the platform account
-seed, then boots the API.
+seed, then boots the API. The seed **exits 1** when `COLOSSUS_ACCOUNTS_JSON` is
+absent rather than inventing a login, so compose fails fast if you skip the
+exports above.
 
 ## Local development
 

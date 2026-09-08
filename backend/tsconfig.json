@@ -10,7 +10,12 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "incremental": true,
+    // Deliberately NOT incremental. `tsc --noEmit -p tsconfig.build.json`
+    // (the typecheck script) writes tsconfig.build.tsbuildinfo; a later
+    // `nest build` deletes dist/ (deleteOutDir), trusts that cache as
+    // up-to-date and emits nothing — yielding an image with no
+    // dist/main.js. Any pipeline that typechecks before building hits it.
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
