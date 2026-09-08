@@ -23,6 +23,13 @@ export class LoginComponent {
   readonly errors = signal<string[]>([]);
   readonly submitting = signal(false);
 
+  /**
+   * Preview-only shortcut label. `COLOSSUS_PREVIEW` is folded to `false` by esbuild in
+   * production builds, so this (and `useDemoMode`) is dead-code-eliminated from every
+   * shipped bundle — it only exists in the `mockup` preview configuration.
+   */
+  readonly previewShortcut = COLOSSUS_PREVIEW ? 'Sign in as the seeded demo user' : null;
+
   private get redirect(): string | null {
     return this.route.snapshot.queryParamMap.get('redirect');
   }
@@ -42,5 +49,9 @@ export class LoginComponent {
         this.errors.set(Array.isArray(err) ? err : ['email or password is invalid']);
       },
     });
+  }
+
+  useDemoMode(): void {
+    this.auth.previewSignIn();
   }
 }

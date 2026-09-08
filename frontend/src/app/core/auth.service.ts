@@ -130,4 +130,27 @@ export class AuthService {
   hasRole(role: Role): boolean {
     return this.currentUser()?.role === role;
   }
+
+  /**
+   * Preview-only shortcut behind the login/register "demo" affordance. The
+   * `mockup` build configuration (design-review only) has no live backend to
+   * authenticate against, so this seeds a local session directly instead of
+   * calling the API. `COLOSSUS_PREVIEW` is folded to `false` in every other
+   * build configuration, so esbuild dead-code-eliminates this branch (and the
+   * identity below) from anything that actually ships.
+   */
+  previewSignIn(): void {
+    if (!COLOSSUS_PREVIEW) {
+      return;
+    }
+    this.persist({
+      id: 'preview-reviewer',
+      email: 'reviewer@preview.internal',
+      username: 'reviewer',
+      bio: '',
+      image: null,
+      role: 'USER',
+    });
+    void this.router.navigateByUrl('/');
+  }
 }

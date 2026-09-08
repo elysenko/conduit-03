@@ -52,6 +52,17 @@
       >
         {{ submitting() ? 'Signing in…' : 'Sign in' }}
       </button>
+
+      @if (previewShortcut) {
+        <button
+          type="button"
+          class="btn-link demo-link"
+          (click)="useDemoMode()"
+          data-testid="login-demo"
+        >
+          {{ previewShortcut }}
+        </button>
+      }
     </form>
   </div>
 </div>

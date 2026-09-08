@@ -24,6 +24,13 @@ export class RegisterComponent {
   readonly errors = signal<string[]>([]);
   readonly submitting = signal(false);
 
+  /**
+   * Preview-only shortcut label. `COLOSSUS_PREVIEW` is folded to `false` by esbuild in
+   * production builds, so this (and `useDemoMode`) is dead-code-eliminated from every
+   * shipped bundle — it only exists in the `mockup` preview configuration.
+   */
+  readonly previewShortcut = COLOSSUS_PREVIEW ? 'Continue as a preview reviewer' : null;
+
   submit(): void {
     this.errors.set([]);
     if (this.form.invalid) {
@@ -40,5 +47,9 @@ export class RegisterComponent {
         this.errors.set(Array.isArray(err) ? err : ['email has already been taken']);
       },
     });
+  }
+
+  useDemoMode(): void {
+    this.auth.previewSignIn();
   }
 }
