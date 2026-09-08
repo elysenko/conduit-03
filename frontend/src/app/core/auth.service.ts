@@ -40,13 +40,6 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
 
-  /**
-   * Empty in every build. The sign-in screens render a demo shortcut only when
-   * this is non-empty; the app authenticates against the real API exclusively,
-   * so there is no credential-free path in.
-   */
-  readonly previewShortcut = '';
-
   constructor() {
     this.restore();
   }
@@ -132,11 +125,6 @@ export class AuthService {
     this.currentUser.set(null);
     removeKeys(USER_KEY, TOKEN_KEY);
     void this.router.navigateByUrl('/');
-  }
-
-  /** Retained for the sign-in templates; `previewShortcut` never renders it. */
-  previewSignIn(): void {
-    /* no credential-free sign-in exists against the live API */
   }
 
   hasRole(role: Role): boolean {

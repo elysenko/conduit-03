@@ -23,7 +23,6 @@ export class RegisterComponent {
 
   readonly errors = signal<string[]>([]);
   readonly submitting = signal(false);
-  readonly previewShortcut = this.auth.previewShortcut;
 
   submit(): void {
     this.errors.set([]);
@@ -41,9 +40,5 @@ export class RegisterComponent {
         this.errors.set(Array.isArray(err) ? err : ['email has already been taken']);
       },
     });
-  }
-
-  useDemoMode(): void {
-    this.auth.previewSignIn();
   }
 }

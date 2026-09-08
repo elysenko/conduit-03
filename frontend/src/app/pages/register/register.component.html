@@ -68,12 +68,6 @@
       >
         {{ submitting() ? 'Creating account…' : 'Sign up' }}
       </button>
-
-      @if (previewShortcut) {
-        <button type="button" class="btn-link demo-link" (click)="useDemoMode()" data-testid="register-demo">
-          {{ previewShortcut }}
-        </button>
-      }
     </form>
   </div>
 </div>

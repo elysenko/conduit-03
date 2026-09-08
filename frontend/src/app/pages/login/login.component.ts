@@ -23,9 +23,6 @@ export class LoginComponent {
   readonly errors = signal<string[]>([]);
   readonly submitting = signal(false);
 
-  /** Empty string in production builds, so the shortcut button never renders. */
-  readonly previewShortcut = this.auth.previewShortcut;
-
   private get redirect(): string | null {
     return this.route.snapshot.queryParamMap.get('redirect');
   }
@@ -45,9 +42,5 @@ export class LoginComponent {
         this.errors.set(Array.isArray(err) ? err : ['email or password is invalid']);
       },
     });
-  }
-
-  useDemoMode(): void {
-    this.auth.previewSignIn();
   }
 }
