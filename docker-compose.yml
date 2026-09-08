@@ -1,39 +1,63 @@
-version: '3.9'
-
+# Local development stack for Conduit.
+# Mirrors the deployed topology: nginx serves the Angular bundle and proxies
+# /api to NestJS over the loopback interface they share in the pod.
+#
+#   docker compose up --build
+#   open http://localhost:4200
 services:
-  postgres:
+  db:
     image: postgres:16
-    container_name: template_enterprise_postgres
+    container_name: conduit_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app_development
+      POSTGRES_USER: conduit
+      POSTGRES_PASSWORD: conduit
+      POSTGRES_DB: conduit
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U conduit']
       interval: 10s
       timeout: 5s
       retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: template_enterprise_pgadmin
+  backend:
+    build:
+      context: ./backend
+    container_name: conduit_backend
     restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: postgres
-    ports:
-      - '5050:80'
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      DATABASE_URL: postgresql://conduit:conduit@db:5432/conduit
+      JWT_SECRET: local-development-secret-change-me
+      JWT_EXPIRES_IN: 7d
+      PORT: '3001'
+      # Consumed by prisma/seed/seed.js — the platform injects this in real
+      # environments; locally it materializes one login per role.
+      COLOSSUS_ACCOUNTS_JSON: >-
+        [{"role":"ADMIN","email":"admin@demo.local","password":"Demo1234!","login_path":"/login"},
+         {"role":"USER","email":"user@demo.local","password":"Demo1234!","login_path":"/login"}]
+    command: >-
+      sh -c "npx prisma migrate deploy && node prisma/seed/seed.js && node dist/main.js"
+    ports:
+      # 3001: the API directly, 4200: the frontend's nginx (see network_mode below).
+      - '3001:3001'
+      - '4200:80'
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: conduit_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # Shares the backend's network namespace so nginx can reach the API on
+    # 127.0.0.1:3001 exactly as it does inside the deployed pod.
+    network_mode: 'service:backend'
 
 volumes:
   postgres_data:
-  pgadmin_data:

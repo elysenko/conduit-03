@@ -1,27 +1,40 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import {
-  HealthCheck,
-  HealthCheckService,
-  HttpHealthIndicator,
-  HealthCheckResult,
-} from '@nestjs/terminus';
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
-  constructor(
-    private readonly health: HealthCheckService,
-    private readonly http: HttpHealthIndicator,
-  ) {}
+  private readonly logger = new Logger(HealthController.name);
 
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** Liveness: the process is up. Never touches the database. */
   @Get()
-  @HealthCheck()
-  check(): Promise<HealthCheckResult> {
-    const port = process.env.PORT ?? '3000';
-    return this.health.check([
-      () =>
-        this.http.pingCheck('api', `http://localhost:${port}/trpc`),
-    ]);
+  check(): { status: string } {
+    return { status: 'ok' };
+  }
+
+  /** Readiness: the database answers. 503 when it does not. */
+  @Get('deep')
+  async deep(): Promise<{ status: string; database: string }> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', database: 'up' };
+    } catch (error) {
+      this.logger.error(
+        `Deep health check failed: ${(error as Error).message}`,
+      );
+      throw new HttpException(
+        { status: 'error', database: 'down' },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
   }
 }
