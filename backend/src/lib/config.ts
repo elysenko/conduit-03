@@ -27,9 +27,34 @@ export class ServiceUnconfiguredError extends HttpException {
   }
 }
 
-function fromEnv(key: string): string | null {
-  const value = process.env[key];
+/**
+ * Platform-provided aliases for keys this app names differently.
+ *
+ * The infra secret publishes MinIO's credentials under the names the MinIO
+ * chart uses (`MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`), while the settings
+ * catalog names them by their S3 role. Without this mapping the credentials are
+ * present in the environment but read as absent, and object storage shows up as
+ * "Not configured" on the admin screen despite being provisioned.
+ */
+const ENV_ALIASES: Record<string, string[]> = {
+  MINIO_ACCESS_KEY: ['MINIO_ROOT_USER'],
+  MINIO_SECRET_KEY: ['MINIO_ROOT_PASSWORD'],
+};
+
+function readEnvVar(name: string): string | null {
+  const value = process.env[name];
   return value && value !== PLACEHOLDER ? value : null;
+}
+
+function fromEnv(key: string): string | null {
+  // The canonical name always wins; aliases only fill a gap.
+  return (
+    readEnvVar(key) ??
+    (ENV_ALIASES[key] ?? []).reduce<string | null>(
+      (found, alias) => found ?? readEnvVar(alias),
+      null,
+    )
+  );
 }
 
 /**

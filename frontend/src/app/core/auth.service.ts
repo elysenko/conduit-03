@@ -1,14 +1,12 @@
-import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { map, Observable, of, tap, throwError } from 'rxjs';
-import { DEMO_USER } from './mock-data';
+import { catchError, map, Observable, of, tap } from 'rxjs';
+import { ApiService } from './api.service';
 import { Role, User } from './models';
 import { readRaw, removeKeys, writeRaw } from './storage';
 
 const USER_KEY = 'user';
 const TOKEN_KEY = 'token';
-const ANON_KEY = 'anon';
 
 export interface Credentials {
   email: string;
@@ -28,17 +26,26 @@ function isUser(value: unknown): value is User {
   );
 }
 
+/**
+ * Session state for the SPA. The token is minted by POST /api/users(/login),
+ * kept in namespaced localStorage, and replayed on same-origin API calls by
+ * `authInterceptor`.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient);
+  private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
   readonly currentUser = signal<User | null>(null);
   readonly isAuthenticated = computed(() => this.currentUser() !== null);
   readonly isAdmin = computed(() => this.currentUser()?.role === 'ADMIN');
 
-  /** Preview-only shortcut label; kept out of the template so it cannot ship. */
-  readonly previewShortcut = COLOSSUS_PREVIEW ? 'Skip login — Demo Mode' : '';
+  /**
+   * Empty in every build. The sign-in screens render a demo shortcut only when
+   * this is non-empty; the app authenticates against the real API exclusively,
+   * so there is no credential-free path in.
+   */
+  readonly previewShortcut = '';
 
   constructor() {
     this.restore();
@@ -59,16 +66,10 @@ export class AuthService {
           return;
         }
       }
-      removeKeys(USER_KEY, TOKEN_KEY);
     } catch {
-      removeKeys(USER_KEY, TOKEN_KEY);
+      /* fall through to the clear below */
     }
-
-    if (COLOSSUS_PREVIEW && readRaw(ANON_KEY) !== '1') {
-      // Static preview has no API: treat the reviewer as already signed in so
-      // every authenticated route renders on a cold, direct URL load.
-      this.persist(DEMO_USER);
-    }
+    removeKeys(USER_KEY, TOKEN_KEY);
   }
 
   private persist(user: User): void {
@@ -79,27 +80,11 @@ export class AuthService {
     } else {
       removeKeys(TOKEN_KEY);
     }
-    removeKeys(ANON_KEY);
   }
 
   login(creds: Credentials, redirect?: string | null): Observable<User> {
-    if (COLOSSUS_PREVIEW) {
-      const errors = this.validate(creds);
-      if (errors.length) {
-        return throwError(() => errors);
-      }
-      const user: User = {
-        ...DEMO_USER,
-        email: creds.email,
-        username: this.deriveUsername(creds.email),
-      };
-      this.persist(user);
-      void this.router.navigateByUrl(redirect || '/');
-      return of(user);
-    }
-
-    return this.http
-      .post<{ user: User }>('/api/users/login', { user: creds })
+    return this.api
+      .post<{ user: User }>('/users/login', { user: creds })
       .pipe(
         map((res) => res.user),
         tap((user) => {
@@ -110,24 +95,7 @@ export class AuthService {
   }
 
   register(creds: Credentials, redirect?: string | null): Observable<User> {
-    if (COLOSSUS_PREVIEW) {
-      const errors = this.validate(creds, true);
-      if (errors.length) {
-        return throwError(() => errors);
-      }
-      const user: User = {
-        ...DEMO_USER,
-        id: 'usr_new',
-        email: creds.email,
-        username: creds.username || this.deriveUsername(creds.email),
-        bio: '',
-      };
-      this.persist(user);
-      void this.router.navigateByUrl(redirect || '/');
-      return of(user);
-    }
-
-    return this.http.post<{ user: User }>('/api/users', { user: creds }).pipe(
+    return this.api.post<{ user: User }>('/users', { user: creds }).pipe(
       map((res) => res.user),
       tap((user) => {
         this.persist(user);
@@ -137,56 +105,41 @@ export class AuthService {
   }
 
   updateUser(patch: Partial<User>): Observable<User> {
-    const merged = { ...(this.currentUser() ?? DEMO_USER), ...patch } as User;
-    if (COLOSSUS_PREVIEW) {
-      this.persist(merged);
-      return of(merged);
-    }
-    return this.http.put<{ user: User }>('/api/user', { user: patch }).pipe(
+    return this.api.put<{ user: User }>('/user', { user: patch }).pipe(
       map((res) => res.user),
       tap((user) => this.persist(user)),
+    );
+  }
+
+  /**
+   * Re-read the signed-in user from the API so a screen never edits a stale
+   * copy of the profile. The response carries a freshly signed token, so this
+   * also slides the session forward. A failure is non-fatal: the cached user
+   * stays in place and the caller keeps rendering.
+   */
+  refreshCurrentUser(): Observable<User | null> {
+    if (!this.currentUser()) {
+      return of(null);
+    }
+    return this.api.get<{ user: User }>('/user').pipe(
+      map((res) => res.user),
+      tap((user) => this.persist(user)),
+      catchError(() => of(this.currentUser())),
     );
   }
 
   logout(): void {
     this.currentUser.set(null);
     removeKeys(USER_KEY, TOKEN_KEY);
-    writeRaw(ANON_KEY, '1');
     void this.router.navigateByUrl('/');
   }
 
-  /** Preview-only: seed the signed-in state with no credentials at all. */
+  /** Retained for the sign-in templates; `previewShortcut` never renders it. */
   previewSignIn(): void {
-    if (!COLOSSUS_PREVIEW) {
-      return;
-    }
-    this.persist(DEMO_USER);
-    void this.router.navigateByUrl('/');
+    /* no credential-free sign-in exists against the live API */
   }
 
   hasRole(role: Role): boolean {
     return this.currentUser()?.role === role;
-  }
-
-  private deriveUsername(email: string): string {
-    return (email.split('@')[0] || 'reader').replace(/[^a-z0-9-]/gi, '') || 'reader';
-  }
-
-  private validate(creds: Credentials, requireUsername = false): string[] {
-    const errors: string[] = [];
-    if (requireUsername && !creds.username?.trim()) {
-      errors.push("username can't be blank");
-    }
-    if (!creds.email?.trim()) {
-      errors.push("email can't be blank");
-    } else if (!/^[^\s@]+@[^\s@]+$/.test(creds.email.trim())) {
-      errors.push('email must be a valid address');
-    }
-    if (!creds.password) {
-      errors.push("password can't be blank");
-    } else if (creds.password.length < 8) {
-      errors.push('password must be at least 8 characters');
-    }
-    return errors;
   }
 }

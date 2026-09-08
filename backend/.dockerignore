@@ -5,3 +5,6 @@ coverage
 .env.*
 *.log
 test
+
+# Stale incremental cache would make `nest build` emit nothing (see .gitignore).
+*.tsbuildinfo

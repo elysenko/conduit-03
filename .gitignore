@@ -18,3 +18,8 @@ yarn-error.log*
 # Editor / OS noise
 .DS_Store
 *.swp
+
+# TypeScript incremental build cache. Must never be committed or copied into a
+# build context: `nest build` deletes dist/ then trusts this cache and emits
+# nothing, producing a runtime image with no dist/main.js.
+*.tsbuildinfo

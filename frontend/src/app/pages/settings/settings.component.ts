@@ -27,6 +27,24 @@ export class SettingsComponent {
     password: [''],
   });
 
+  constructor() {
+    // The cached user may predate an edit made elsewhere, so re-read it from
+    // the API before the form is touched. Untouched controls only.
+    this.loading.set(true);
+    this.auth.refreshCurrentUser().subscribe((user) => {
+      this.loading.set(false);
+      if (!user || this.form.dirty) {
+        return;
+      }
+      this.form.patchValue({
+        image: user.image ?? '',
+        username: user.username,
+        bio: user.bio,
+        email: user.email,
+      });
+    });
+  }
+
   submit(): void {
     this.errors.set([]);
     this.saved.set(false);

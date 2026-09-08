@@ -1,11 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, EMPTY, forkJoin, Observable, of, switchMap, tap } from 'rxjs';
+import { apiErrorMessage, isNotFound } from '../../core/api.service';
+import { ArticleService } from '../../core/article.service';
 import { AuthService } from '../../core/auth.service';
-import { MOCK_ARTICLES, MOCK_COMMENTS } from '../../core/mock-data';
-import { Article, Comment } from '../../core/models';
+import { CommentService } from '../../core/comment.service';
+import { Article, Comment, Profile } from '../../core/models';
+import { ProfileService } from '../../core/profile.service';
 import { CommentCardComponent } from '../../shared/comment-card.component';
 import { ConfirmModalComponent } from '../../shared/confirm-modal.component';
 
@@ -27,33 +31,29 @@ export class ArticleComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly articleApi = inject(ArticleService);
+  private readonly commentApi = inject(CommentService);
+  private readonly profileApi = inject(ProfileService);
 
   readonly currentUser = this.auth.currentUser;
   readonly isAuthenticated = this.auth.isAuthenticated;
 
-  /** Backend-owned data — replaced with API calls by the service layer. */
-  articles = signal<Article[]>([...MOCK_ARTICLES]);
-  comments = signal<Comment[]>([...MOCK_COMMENTS]);
+  /** Live API state — one article and its comments, keyed by the route slug. */
+  readonly article = signal<Article | null>(null);
+  readonly comments = signal<Comment[]>([]);
 
-  loading = signal(false);
-  error = signal<string | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
   readonly commentForm = this.fb.nonNullable.group({
     body: ['', [Validators.required, Validators.minLength(2)]],
   });
 
-  private readonly params = toSignal(this.route.paramMap, {
-    initialValue: this.route.snapshot.paramMap,
-  });
   private readonly query = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap,
   });
 
-  readonly slug = computed(() => this.params().get('slug') ?? '');
-  readonly article = computed<Article | undefined>(() => {
-    const slug = this.slug();
-    return this.articles().find((a) => a.slug === slug) ?? this.articles()[0];
-  });
+  readonly slug = computed(() => this.article()?.slug ?? '');
 
   readonly isAuthor = computed(
     () => this.article()?.author.username === this.currentUser()?.username,
@@ -65,55 +65,98 @@ export class ArticleComponent {
   readonly modal = computed(() => this.query().get('modal'));
   readonly pendingCommentId = computed(() => this.query().get('commentId'));
 
+  constructor() {
+    this.route.paramMap
+      .pipe(
+        switchMap((params) => this.load(params.get('slug') ?? '')),
+        takeUntilDestroyed(),
+      )
+      .subscribe();
+  }
+
+  private load(slug: string): Observable<unknown> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return forkJoin({
+      article: this.articleApi.get(slug),
+      // Comments are secondary: a failure there must not hide the article.
+      comments: this.commentApi.list(slug).pipe(catchError(() => of([] as Comment[]))),
+    }).pipe(
+      tap(({ article, comments }) => {
+        this.article.set(article);
+        this.comments.set(comments);
+        this.loading.set(false);
+      }),
+      catchError((err: unknown) => {
+        this.article.set(null);
+        this.comments.set([]);
+        // A 404 is not an error banner — the template has a "not found" state.
+        this.error.set(
+          isNotFound(err) ? null : apiErrorMessage(err, 'Could not load this article.'),
+        );
+        this.loading.set(false);
+        return EMPTY;
+      }),
+    );
+  }
+
   canDeleteComment(comment: Comment): boolean {
     return comment.author.username === this.currentUser()?.username;
   }
 
+  /** Anonymous readers are sent to sign in before any write. */
+  private requireAuth(): boolean {
+    if (this.isAuthenticated()) {
+      return true;
+    }
+    void this.router.navigate(['/login'], { queryParams: { redirect: this.router.url } });
+    return false;
+  }
+
   toggleFavorite(): void {
-    const slug = this.article()?.slug;
-    this.articles.update((list) =>
-      list.map((a) =>
-        a.slug === slug
-          ? {
-              ...a,
-              favorited: !a.favorited,
-              favoritesCount: a.favoritesCount + (a.favorited ? -1 : 1),
-            }
-          : a,
-      ),
-    );
+    const current = this.article();
+    if (!current || !this.requireAuth()) {
+      return;
+    }
+    this.articleApi.setFavorite(current.slug, !current.favorited).subscribe({
+      next: (updated) => this.article.set(updated),
+      error: (err: unknown) =>
+        this.error.set(apiErrorMessage(err, 'Could not update your favorite.')),
+    });
   }
 
   toggleFollow(): void {
-    const author = this.article()?.author.username;
-    this.articles.update((list) =>
-      list.map((a) =>
-        a.author.username === author
-          ? { ...a, author: { ...a.author, following: !a.author.following } }
-          : a,
-      ),
-    );
+    const current = this.article();
+    if (!current || !this.requireAuth()) {
+      return;
+    }
+    const author = current.author;
+    this.profileApi.setFollow(author.username, !author.following).subscribe({
+      next: (profile: Profile) =>
+        this.article.update((a) => (a ? { ...a, author: profile } : a)),
+      error: (err: unknown) =>
+        this.error.set(apiErrorMessage(err, `Could not follow ${author.username}.`)),
+    });
   }
 
   addComment(): void {
-    if (this.commentForm.invalid) {
+    const current = this.article();
+    if (!current || this.commentForm.invalid) {
       this.commentForm.markAllAsTouched();
       return;
     }
-    const user = this.currentUser();
-    const entry: Comment = {
-      id: `cmt_${this.comments().length + 1}_local`,
-      body: this.commentForm.getRawValue().body,
-      createdAt: new Date().toISOString(),
-      author: {
-        username: user?.username ?? 'you',
-        bio: user?.bio ?? '',
-        image: user?.image ?? null,
-        following: false,
-      },
-    };
-    this.comments.update((list) => [entry, ...list]);
-    this.commentForm.reset({ body: '' });
+    const body = this.commentForm.getRawValue().body;
+    this.commentApi
+      .create(current.slug, body)
+      .subscribe({
+        next: (comment) => {
+          this.comments.update((list) => [comment, ...list]);
+          this.commentForm.reset({ body: '' });
+        },
+        error: (err: unknown) =>
+          this.error.set(apiErrorMessage(err, 'Could not post your comment.')),
+      });
   }
 
   openDeleteArticle(): void {
@@ -138,14 +181,35 @@ export class ArticleComponent {
   }
 
   confirmDeleteArticle(): void {
-    const slug = this.article()?.slug;
-    this.articles.update((list) => list.filter((a) => a.slug !== slug));
-    void this.router.navigate(['/']);
+    const current = this.article();
+    if (!current) {
+      return;
+    }
+    this.articleApi.remove(current.slug).subscribe({
+      next: () => void this.router.navigate(['/']),
+      error: (err: unknown) => {
+        this.closeModal();
+        this.error.set(apiErrorMessage(err, 'Could not delete this article.'));
+      },
+    });
   }
 
   confirmDeleteComment(): void {
+    const current = this.article();
     const id = this.pendingCommentId();
-    this.comments.update((list) => list.filter((c) => c.id !== id));
-    this.closeModal();
+    if (!current || !id) {
+      this.closeModal();
+      return;
+    }
+    this.commentApi.remove(current.slug, id).subscribe({
+      next: () => {
+        this.comments.update((list) => list.filter((c) => c.id !== id));
+        this.closeModal();
+      },
+      error: (err: unknown) => {
+        this.closeModal();
+        this.error.set(apiErrorMessage(err, 'Could not delete this comment.'));
+      },
+    });
   }
 }
