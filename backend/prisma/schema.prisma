@@ -7,15 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Platform auth baseline (Colossus accounts-v1). Do not rename `Role` or
+// `passwordHash`: prisma/seed/seed.js and the auth service depend on both.
+// ─────────────────────────────────────────────────────────────────────────────
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
   name         String?
+  /// Public handle used by /api/profiles/:username and article author payloads.
+  /// Defaults to a cuid so the platform account seed can create rows without one;
+  /// seed.js overwrites it with the email local-part for readable logins.
+  username     String   @unique @default(cuid())
+  bio          String   @default("")
+  image        String?
   /// bcryptjs hash (BCRYPT_ROUNDS in prisma/seed/seed.js and the auth service). Never store plaintext.
   passwordHash String
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  articles  Article[]
+  comments  Comment[]
+  favorites Favorite[]
+  following Follow[]   @relation("FollowFollower")
+  followers Follow[]   @relation("FollowFollowed")
 }
 
 /// One value per role the stack contract declares (stacks/combos/enterprise.json auth.roles).
@@ -40,4 +57,101 @@ model ColossusAccount {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("colossus_accounts")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Conduit domain
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Article {
+  id          String   @id @default(cuid())
+  /// slugify(title) + '-' + 6-char base36 suffix; regenerated when the title changes.
+  slug        String   @unique
+  title       String
+  description String
+  body        String
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags      ArticleTag[]
+  comments  Comment[]
+  favorites Favorite[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  articleId String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([authorId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles ArticleTag[]
+}
+
+/// Join table for Article <-> Tag. Filtering uses `tags: { some: { tag: { name } } }`
+/// so an article carrying several matched tags is never duplicated in a list response.
+model ArticleTag {
+  articleId String
+  tagId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+model Favorite {
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+}
+
+model Follow {
+  followerId String
+  followedId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  follower User @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("FollowFollowed", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followedId])
+  @@index([followedId])
+}
+
+/// Runtime override layer for service credentials. resolveConfig() reads the env var
+/// first and falls back to this table; backs the admin settings screen.
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

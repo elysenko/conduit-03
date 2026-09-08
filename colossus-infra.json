@@ -1,0 +1,9 @@
+{
+  "postgres": {
+    "host": "postgres-postgresql.colossus-conduit-03.svc.cluster.local",
+    "port": 5432,
+    "user": "postgres",
+    "password": "lOK9sbbMsLcp71h0C2jqHkev",
+    "database": "app"
+  }
+}

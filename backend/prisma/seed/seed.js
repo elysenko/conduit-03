@@ -64,6 +64,22 @@ function resolveAppRole(contractRole) {
   return match;
 }
 
+/**
+ * Derive a readable public handle from the account email, e.g. admin@demo.local -> "admin".
+ * `User.username` is unique and defaults to a cuid, so this is cosmetic only: on collision
+ * we suffix the role, then a counter, and never steal a handle owned by another email.
+ */
+async function resolveUsername(email, role) {
+  const base = (email.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9_-]+/g, '') || 'user';
+  const candidates = [base, `${base}-${role.toLowerCase()}`];
+  for (let i = 2; i <= 20; i += 1) candidates.push(`${base}-${i}`);
+  for (const candidate of candidates) {
+    const owner = await prisma.user.findUnique({ where: { username: candidate } });
+    if (!owner || owner.email === email) return candidate;
+  }
+  return null; // fall back to the schema's cuid default rather than fail the seed
+}
+
 /** Upsert the colossus_accounts row and the matching User for one platform account. */
 async function upsertAccount(account) {
   const role = resolveAppRole(account.role);
@@ -74,10 +90,17 @@ async function upsertAccount(account) {
     update: { role: account.role, passwordHash, loginPath },
     create: { role: account.role, email: account.email, passwordHash, loginPath },
   });
+  const username = await resolveUsername(account.email, role);
   await prisma.user.upsert({
     where: { email: account.email },
-    update: { role, passwordHash },
-    create: { email: account.email, name: `${role} (Colossus)`, role, passwordHash },
+    update: { role, passwordHash, ...(username ? { username } : {}) },
+    create: {
+      email: account.email,
+      name: `${role} (Colossus)`,
+      role,
+      passwordHash,
+      ...(username ? { username } : {}),
+    },
   });
   return role;
 }
